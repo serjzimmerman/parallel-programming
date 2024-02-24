@@ -86,7 +86,7 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-bin_PROGRAMS = hello$(EXEEXT) reduce$(EXEEXT)
+bin_PROGRAMS = hello$(EXEEXT) reduce$(EXEEXT) roundabout$(EXEEXT)
 subdir = src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -104,6 +104,9 @@ hello_LDADD = $(LDADD)
 am_reduce_OBJECTS = reduce.$(OBJEXT)
 reduce_OBJECTS = $(am_reduce_OBJECTS)
 reduce_LDADD = $(LDADD)
+am_roundabout_OBJECTS = roundabout.$(OBJEXT)
+roundabout_OBJECTS = $(am_roundabout_OBJECTS)
+roundabout_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -119,7 +122,8 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = ./$(DEPDIR)/hello.Po ./$(DEPDIR)/reduce.Po
+am__depfiles_remade = ./$(DEPDIR)/hello.Po ./$(DEPDIR)/reduce.Po \
+	./$(DEPDIR)/roundabout.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -133,8 +137,9 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(hello_SOURCES) $(reduce_SOURCES)
-DIST_SOURCES = $(hello_SOURCES) $(reduce_SOURCES)
+SOURCES = $(hello_SOURCES) $(reduce_SOURCES) $(roundabout_SOURCES)
+DIST_SOURCES = $(hello_SOURCES) $(reduce_SOURCES) \
+	$(roundabout_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -250,6 +255,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 hello_SOURCES = hello.c
 reduce_SOURCES = reduce.c
+roundabout_SOURCES = roundabout.c
 all: all-am
 
 .SUFFIXES:
@@ -334,6 +340,10 @@ reduce$(EXEEXT): $(reduce_OBJECTS) $(reduce_DEPENDENCIES) $(EXTRA_reduce_DEPENDE
 	@rm -f reduce$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(reduce_OBJECTS) $(reduce_LDADD) $(LIBS)
 
+roundabout$(EXEEXT): $(roundabout_OBJECTS) $(roundabout_DEPENDENCIES) $(EXTRA_roundabout_DEPENDENCIES) 
+	@rm -f roundabout$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(roundabout_OBJECTS) $(roundabout_LDADD) $(LIBS)
+
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 
@@ -342,6 +352,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hello.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/reduce.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/roundabout.Po@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -491,6 +502,7 @@ clean-am: clean-binPROGRAMS clean-generic mostlyclean-am
 distclean: distclean-am
 		-rm -f ./$(DEPDIR)/hello.Po
 	-rm -f ./$(DEPDIR)/reduce.Po
+	-rm -f ./$(DEPDIR)/roundabout.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -538,6 +550,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 		-rm -f ./$(DEPDIR)/hello.Po
 	-rm -f ./$(DEPDIR)/reduce.Po
+	-rm -f ./$(DEPDIR)/roundabout.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

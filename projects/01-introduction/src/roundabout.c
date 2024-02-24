@@ -25,60 +25,37 @@
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-
-struct options_s {
-  long long n;
-};
-
-typedef struct options_s options;
-
-void read_options(int argc, char *const *argv, options *opts) {
-  int c;
-  while ((c = getopt(argc, argv, "n:")) != -1) {
-    switch (c) {
-    case 'n':
-      opts->n = atoll(optarg);
-      break;
-    case '?':
-      fprintf(stderr, "Usage: %s [-n] num\n", argv[0]);
-      exit(EXIT_FAILURE);
-    default:
-      abort();
-    }
-  }
-}
 
 #define ROOT_RANK 0
+#define TAG 0
+
+void modify_data_and_print_msg(int pid, int *data) {
+  printf("Rank: %d, Data: %d\n", pid, *data);
+  ++*data;
+}
 
 int main(int argc, char **argv) {
   int np, pid;
-  long long nums_per_process;
-  options opts;
-  double result;
+  int data = 0;
 
-  read_options(argc, argv, &opts);
   MPI_Init(&argc, &argv);
+
   MPI_Comm_size(MPI_COMM_WORLD, &np);
   MPI_Comm_rank(MPI_COMM_WORLD, &pid);
 
-  int last_pid = np - 1;
-  nums_per_process = opts.n / np;
-  if (pid == last_pid) {
-    for (long long j = (nums_per_process * pid) + 1; j <= opts.n; ++j)
-      result += 1.0 / (double)(j);
+  if (pid == ROOT_RANK) {
+    modify_data_and_print_msg(pid, &data);
+    MPI_Send(&data, 1, MPI_INT, pid + 1, TAG, MPI_COMM_WORLD);
   } else {
-    for (long long i = 0, j = (nums_per_process * pid) + 1;
-         i < nums_per_process; ++i, ++j)
-      result += 1.0 / (double)(j);
+    MPI_Recv(&data, 1, MPI_INT, pid - 1, TAG, MPI_COMM_WORLD,
+             MPI_STATUS_IGNORE);
+    modify_data_and_print_msg(pid, &data);
+    MPI_Send(&data, 1, MPI_INT, (pid + 1) % np, TAG, MPI_COMM_WORLD);
   }
 
-  double reduced;
-  MPI_Reduce(&result, &reduced, 1, MPI_DOUBLE, MPI_SUM, ROOT_RANK,
-             MPI_COMM_WORLD);
-
   if (pid == ROOT_RANK) {
-    printf("Rank: %d; Sum over n = %lld = %lf\n", pid, opts.n, reduced);
+    MPI_Recv(&data, 1, MPI_INT, np - 1, TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    modify_data_and_print_msg(pid, &data);
   }
 
   MPI_Finalize();
