@@ -18,7 +18,7 @@ format:
   @result/bin/format-all
 
 addlicense:
-  @find . -type f \( -name "*.c" -o -name "*.h" \) -exec addlicense -f LICENSE -l mit {} \;
+  @find . -type f \( -name "*.c" -o -name "*.h" -o \) -exec addlicense -f LICENSE -l mit {} \;
 
 autogen:
   @cd {{invocation_directory()}} && autoreconf --install
