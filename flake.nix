@@ -25,9 +25,10 @@
         mpi
         automake
         autoconf
-        autoconf-archive
         addlicense
         gdb
+        gnuplot
+        bc
       ];
 
       shell =
