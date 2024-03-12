@@ -4,22 +4,20 @@ alias lint := check
 alias r := run-workflows
 
 run-workflows:
-  @act -P ubuntu-22.04=ghcr.io/catthehacker/ubuntu:runner-22.04
+    @act -P ubuntu-22.04=ghcr.io/catthehacker/ubuntu:runner-22.04
 
 check:
-  @nix build ".#all-checks" -L
-  @nix flake check
+    @nix flake check
 
 check-format:
-  @nix build ".#all-formats" -L
+    @nix flake check
 
 format:
-  @nix build ".#format-all"
-  @result/bin/format-all
+    @nix fmt
 
 addlicense:
-  @find . -type f \( -name "*.c" -o -name "*.h" -o \) -exec addlicense -f LICENSE -l mit {} \;
+    @find . -type f \( -name "*.c" -o -name "*.h" -o \) -exec addlicense -f LICENSE -l mit {} \;
 
 autogen:
-  @cd {{invocation_directory()}} && autoreconf --install
-  @cd {{invocation_directory()}} && automake --add-missing --copy >/dev/null 2>&1
+    @cd {{ invocation_directory() }} && autoreconf --install
+    @cd {{ invocation_directory() }} && automake --add-missing --copy >/dev/null 2>&1
