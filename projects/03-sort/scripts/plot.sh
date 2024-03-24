@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
 
-for t in send ssend bsend rsend; do
-  gnuplot -p -e "set terminal pdf; set logscale x 2; plot '${OUT_BASENAME}.${t}' with lines" > "${OUT_BASENAME}".${t}.pdf
-done
+gnuplot -p -e "set terminal pdf; set logscale x 2; plot '${OUT_BASENAME}' using 1:4 with lp" > "${OUT_BASENAME}.pdf"
 
