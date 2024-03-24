@@ -128,7 +128,7 @@ void parallel_merge_sort(const mpi::communicator &comm,
 
 auto main(int argc, char **argv) -> int {
   auto env = mpi::environment{argc, argv};
-  auto world = mpi::communicator{};
+  const auto world = mpi::communicator{};
 
   auto desc = po::options_description{"allowed options"};
 
@@ -141,8 +141,9 @@ auto main(int argc, char **argv) -> int {
       "maximum for uniform random distribution")(
       "seed", po::value<uint64_t>()->default_value(0),
       "seed for random number generator")("verbose", "print verbose output")(
-      "samples", po::value<uint32_t>()->default_value(16),
-      "number of samples to average over");
+      "samples", po::value<uint32_t>()->default_value(2048),
+      "number of samples to average over")("parallel",
+                                           "use mpi to sort in parallel");
 
   auto vm = po::variables_map{};
   po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
@@ -156,7 +157,7 @@ auto main(int argc, char **argv) -> int {
     return [=]() mutable { return distribution(random_engine); };
   }();
 
-  auto values =
+  const auto values =
       ranges::views::generate_n(generator, vm.at("num").as<unsigned>()) |
       ranges::to_vector;
 
@@ -164,8 +165,9 @@ auto main(int argc, char **argv) -> int {
       [&vm,
        &world](auto callable) -> std::chrono::duration<double, std::milli> {
     auto run_once = [&] {
+      auto runnable = callable();
       auto begin_time = std::chrono::high_resolution_clock::now();
-      callable();
+      runnable();
       auto end_time = std::chrono::high_resolution_clock::now();
       return std::chrono::duration<double>{end_time - begin_time}.count();
     };
@@ -177,32 +179,36 @@ auto main(int argc, char **argv) -> int {
                                          num_samples};
   };
 
-  auto serial = [&world, values]() mutable {
-    merge_sort(values.begin(), values.end());
-    if (!ranges::is_sorted(values))
-      throw std::logic_error{"serial sort does not work properly"};
+  auto use_parallel = vm.count("parallel");
+
+  auto serial = [&values]() {
+    return [values = values]() mutable {
+      merge_sort(values.begin(), values.end());
+      if (!ranges::is_sorted(values))
+        throw std::logic_error{"serial sort does not work properly"};
+    };
   };
 
-  auto parallel = [&world, values]() mutable {
-    parallel_merge_sort(world, values);
-    if (!ranges::is_sorted(values))
-      throw std::logic_error{"parallel sort does not work properly"};
+  auto parallel = [&world, &values]() mutable {
+    return [&world, values = values]() mutable {
+      parallel_merge_sort(world, values);
+      if (!ranges::is_sorted(values))
+        throw std::logic_error{"parallel sort does not work properly"};
+    };
   };
 
-  auto parallel_duration = measure_time(std::move(parallel));
-  auto serial_duration = measure_time(std::move(serial));
+  auto duration = use_parallel ? measure_time(std::move(parallel))
+                               : measure_time(std::move(serial));
 
   if (world.rank() != root_rank)
     return 0;
 
   if (vm.count("verbose")) {
+    const auto *type = use_parallel ? "parallel" : "serial";
     std::cout << "number of elements: " << vm.at("num").as<uint32_t>() << "\n"
-              << "serial sort took: " << serial_duration << "\n"
-              << "parallel with mpi took: " << parallel_duration << "\n";
+              << type << " sort took: " << duration << "\n";
   } else {
-    std::cout << world.size() << " " << serial_duration.count() << " "
-              << parallel_duration.count() << " "
-              << serial_duration.count() / parallel_duration.count() << "\n";
+    std::cout << duration.count() << "\n";
   }
 
   return 0;
