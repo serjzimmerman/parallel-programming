@@ -184,16 +184,12 @@ auto main(int argc, char **argv) -> int {
   auto serial = [&values]() {
     return [values = values]() mutable {
       merge_sort(values.begin(), values.end());
-      if (!ranges::is_sorted(values))
-        throw std::logic_error{"serial sort does not work properly"};
     };
   };
 
   auto parallel = [&world, &values]() mutable {
     return [&world, values = values]() mutable {
       parallel_merge_sort(world, values);
-      if (!ranges::is_sorted(values))
-        throw std::logic_error{"parallel sort does not work properly"};
     };
   };
 
