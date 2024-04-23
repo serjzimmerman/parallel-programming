@@ -127,8 +127,8 @@ template <typename T> struct solve_result {
 template <std::floating_point T>
 auto solve_transfer_equation(const mpi::communicator &world,
                              auto initial_condition, auto boundary_value, T a,
-                             T b, T time, T t_step, T x_step,
-                             bool dont_collect) -> solve_result<T> {
+                             T b, T time, T t_step, T x_step, bool dont_collect)
+    -> solve_result<T> {
   auto x_dim = static_cast<std::size_t>((b - a) / x_step) + 1;
   auto t_dim = static_cast<std::size_t>(time / t_step) + 1;
 
