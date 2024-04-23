@@ -75,7 +75,8 @@ template <typename T> auto linspace(T a, T b, std::size_t n) -> std::vector<T> {
 
 template <std::floating_point T>
 auto solve_transfer_equation_impl(const mpi::communicator &world, auto data,
-                                  std::span<T> boundary_value, T t_step,
+                                  auto rhs, std::span<T> boundary_value,
+                                  std::span<T> xs, std::span<T> ts, T t_step,
                                   T x_step) {
   auto x_dim = get_num_x_points(data);
 
@@ -110,7 +111,8 @@ auto solve_transfer_equation_impl(const mpi::communicator &world, auto data,
       }();
 
       auto pos = data[i, j];
-      data[i + 1, j] = pos + 0.0 * t_step - (pos - neg) * t_step / x_step;
+      data[i + 1, j] =
+          pos + rhs(xs[j], ts[i]) * t_step - (pos - neg) * t_step / x_step;
     }
   }
 }
@@ -126,9 +128,9 @@ template <typename T> struct solve_result {
 
 template <std::floating_point T>
 auto solve_transfer_equation(const mpi::communicator &world,
-                             auto initial_condition, auto boundary_value, T a,
-                             T b, T time, T t_step, T x_step, bool dont_collect)
-    -> solve_result<T> {
+                             auto initial_condition, auto boundary_value,
+                             auto rhs, T a, T b, T time, T t_step, T x_step,
+                             bool dont_collect) -> solve_result<T> {
   auto x_dim = static_cast<std::size_t>((b - a) / x_step) + 1;
   auto t_dim = static_cast<std::size_t>(time / t_step) + 1;
 
@@ -159,21 +161,24 @@ auto solve_transfer_equation(const mpi::communicator &world,
 
   auto mdspan = column_major_mdspan<T>(data_for_process.data(), t_dim,
                                        num_for_this_process);
-  {
-    auto initial_values =
-        ranges::views::transform(xs, initial_condition) | ranges::to_vector;
-    auto starting_index = world.rank() * per_process;
-    for (auto x_index :
-         ranges::views::iota(std::size_t{0}, num_for_this_process)) {
-      mdspan[0, x_index] = initial_values[starting_index + x_index];
-    }
+  auto starting_index = world.rank() * per_process;
+  auto initial_values =
+      ranges::views::transform(xs, initial_condition) | ranges::to_vector;
+  for (auto x_index :
+       ranges::views::iota(std::size_t{0}, num_for_this_process)) {
+    mdspan[0, x_index] = initial_values[starting_index + x_index];
   }
 
   {
     auto boundary_values =
         ranges::views::transform(ts, boundary_value) | ranges::to_vector;
-    solve_transfer_equation_impl(world, mdspan, std::span{boundary_values},
-                                 t_step, x_step);
+    solve_transfer_equation_impl(
+        world, mdspan, rhs, std::span{boundary_values},
+        std::span{xs}.subspan(starting_index,
+                              starting_index + num_for_this_process),
+        std::span{ts}.subspan(starting_index,
+                              starting_index + num_for_this_process),
+        t_step, x_step);
   }
 
   if (dont_collect)
@@ -241,8 +246,9 @@ auto main(int argc, char **argv) -> int {
 
   auto solve_function = [&](bool dont_collect) {
     return solve_transfer_equation(
-        world, [](auto x) { return std::sin(x); },
-        [](auto t) { return std::sin(t); }, a, b, t, tau, h, dont_collect);
+        world, [](auto x) { return std::cos(std::numbers::pi * x); },
+        [](auto t) { return std::exp(-t); },
+        [](auto x, auto t) { return x + t; }, a, b, t, tau, h, dont_collect);
   };
 
   auto measure_time =
