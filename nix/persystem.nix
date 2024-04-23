@@ -1,12 +1,18 @@
 { pkgs, ... }:
 let
-  clang-tools = pkgs.clang-tools_17;
+  llvmStdenv = pkgs.llvmPackages_18.libcxxStdenv;
+  boost = (
+    pkgs.boost185.override {
+      useMpi = true;
+      stdenv = llvmStdenv;
+    }
+  );
   nativeBuildInputs =
     {
       with_debug ? false,
     }:
     (with pkgs; [
-      clang-tools
+      clang-tools_18
       act
       just
       (mpi.overrideAttrs (
@@ -18,19 +24,23 @@ let
       autoconf
       addlicense
       gdb
+      lldb_18
       gnuplot
       bc
-      (boost.override { useMpi = true; })
       bear
+      boost
       range-v3
+      cmake
+      (fmt.override { stdenv = llvmStdenv; })
+      valgrind
     ]);
   shell =
     {
       with_debug ? false,
     }:
-    (pkgs.mkShell.override { stdenv = pkgs.llvmPackages_17.stdenv; }) {
+    (pkgs.mkShell.override { stdenv = llvmStdenv; }) {
       nativeBuildInputs = nativeBuildInputs { inherit with_debug; };
-      BOOST_LIBDIR = "${pkgs.boost}/lib";
+      BOOST_LIBDIR = "${boost}/lib";
     };
 in
 {
