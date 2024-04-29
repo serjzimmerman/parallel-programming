@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.29)
-project(parallel-transfer-equation)
+project(intro-threads)
 
 option(INSOURCEBUILD OFF) # Prevent in-source style builds
 if((${PROJECT_SOURCE_DIR} STREQUAL ${PROJECT_BINARY_DIR}) AND NOT
@@ -30,15 +30,20 @@ include(../../cmake/functions.cmake)
 
 find_package(range-v3 REQUIRED)
 find_package(fmt REQUIRED)
-find_package(Boost REQUIRED COMPONENTS mpi program_options)
+find_package(Boost REQUIRED COMPONENTS program_options)
 
-add_executable(transfer-solver src/transfer-solver.cc)
-target_enable_linter(transfer-solver)
-target_compile_features(transfer-solver PUBLIC cxx_std_23)
-enable_warnings(transfer-solver)
-target_link_libraries(
-  transfer-solver PRIVATE range-v3::range-v3 Boost::mpi Boost::headers
-                          Boost::program_options fmt::fmt)
+function(easy_add_executable target_name)
+  add_executable(${target_name} src/${target_name}.cc)
+  target_enable_linter(${target_name})
+  target_compile_features(${target_name} PUBLIC cxx_std_23)
+  enable_warnings(${target_name})
+  target_link_libraries(
+    ${target_name} PRIVATE range-v3::range-v3 Boost::headers
+                           Boost::program_options fmt::fmt)
+endfunction()
+
+easy_add_executable(hello-thread)
+easy_add_executable(sum)
 
 execute_process(
   COMMAND

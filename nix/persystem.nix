@@ -1,15 +1,16 @@
 { pkgs, ... }:
 let
   llvmStdenv = pkgs.llvmPackages_18.libcxxStdenv;
-  boost = (
-    pkgs.boost185.override {
+  mkBoost =
+    stdenv:
+    (pkgs.boost185.override {
       useMpi = true;
-      stdenv = llvmStdenv;
-    }
-  );
+      inherit stdenv;
+    });
   nativeBuildInputs =
     {
       with_debug ? false,
+      stdenv ? pkgs.stdenv,
     }:
     (with pkgs; [
       clang-tools_18
@@ -28,24 +29,32 @@ let
       gnuplot
       bc
       bear
-      boost
+      (mkBoost stdenv)
       range-v3
       cmake
-      (fmt.override { stdenv = llvmStdenv; })
+      (fmt.override { inherit stdenv; })
       valgrind
     ]);
-  shell =
+  mkShell =
     {
       with_debug ? false,
+      stdenv ? pkgs.stdenv,
     }:
-    (pkgs.mkShell.override { stdenv = llvmStdenv; }) {
-      nativeBuildInputs = nativeBuildInputs { inherit with_debug; };
-      BOOST_LIBDIR = "${boost}/lib";
+    (pkgs.mkShell.override { inherit stdenv; }) {
+      nativeBuildInputs = nativeBuildInputs { inherit with_debug stdenv; };
+      BOOST_LIBDIR = "${mkBoost stdenv}/lib";
     };
 in
 {
   devShells = {
-    default = shell { with_debug = false; };
-    debug = shell { with_debug = true; };
+    default = mkShell {
+      with_debug = false;
+      stdenv = llvmStdenv;
+    };
+    debug = mkShell {
+      with_debug = true;
+      stdenv = llvmStdenv;
+    };
+    gccDefault = mkShell { };
   };
 }
