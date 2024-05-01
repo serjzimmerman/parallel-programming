@@ -56,5 +56,6 @@ in
       stdenv = llvmStdenv;
     };
     gccDefault = mkShell { };
+    clangLibStdcxx = mkShell { stdenv = pkgs.llvmPackages_18.stdenv; };
   };
 }
