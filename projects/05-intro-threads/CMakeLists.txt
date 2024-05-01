@@ -45,6 +45,7 @@ endfunction()
 easy_add_executable(hello-thread)
 easy_add_executable(sum)
 easy_add_executable(circular)
+easy_add_executable(integration)
 
 execute_process(
   COMMAND
