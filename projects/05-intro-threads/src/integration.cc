@@ -50,8 +50,8 @@ template <std::floating_point T> struct task {
 };
 
 template <std::floating_point T>
-auto parallel_integrate(T a, T b, auto function, uint32_t num_threads,
-                        T eps) -> T {
+auto parallel_integrate(T a, T b, auto function, uint32_t num_threads, T eps)
+    -> T {
   auto active_count = std::atomic<uint32_t>{0};
   constexpr auto queue_size_multiplier = 4;
   auto global_queue = moodycamel::ConcurrentQueue<lockfree::task<T>>{
