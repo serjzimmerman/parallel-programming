@@ -34,6 +34,7 @@ let
       cmake
       (fmt.override { inherit stdenv; })
       valgrind
+      llvmPackages_18.openmp
     ]);
   mkShell =
     {
