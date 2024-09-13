@@ -41,6 +41,7 @@ function(easy_add_executable target_name)
 endfunction()
 
 easy_add_executable(hello-openmp)
+easy_add_executable(reduction)
 
 execute_process(
   COMMAND
