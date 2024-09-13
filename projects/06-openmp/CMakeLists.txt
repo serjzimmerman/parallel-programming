@@ -42,6 +42,7 @@ endfunction()
 
 easy_add_executable(hello-openmp)
 easy_add_executable(reduction)
+easy_add_executable(serialize)
 
 execute_process(
   COMMAND
