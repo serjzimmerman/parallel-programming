@@ -61,10 +61,6 @@ void process_blockwise(auto &are_prime, uint64_t from, uint64_t to) {
     if (easy_check_is_definitely_not_prime(i))
       continue;
 
-    bool is_prime = static_cast<bool>(are_prime[i]);
-    if (!is_prime)
-      continue;
-
     auto start_j = std::max(((from + i - 1) / i) * i, i * i);
     for (auto j = start_j; j <= to; j += i)
       are_prime[j] = false;
