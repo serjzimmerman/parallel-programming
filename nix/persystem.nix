@@ -28,7 +28,6 @@ let
       lldb_18
       gnuplot
       bc
-      bear
       (mkBoost stdenv)
       range-v3
       cmake

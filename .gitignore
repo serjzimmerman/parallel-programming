@@ -4,4 +4,4 @@ build/
 .direnv/
 compile_commands.json
 /result
-.envrc
+.env
